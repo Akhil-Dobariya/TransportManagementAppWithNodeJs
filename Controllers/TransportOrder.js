@@ -101,7 +101,7 @@ async function UpdateOrder(req, res){
         var test = JSON.stringify(req.body);
         console.log('stringified - '+test);
 
-        var query = `Update TransportOrderInformation set Sender='${req.body.SenderName}',Receiver='${req.body.ReceiverName}',SenderMobileNo='${req.body.SenderMobile}',ReceiverMobileNo='${req.body.ReceiverMobile}',ItemInfo='${req.body.ItemInfo}',Quantity='${req.body.Quantity}',UnitPrice='${req.body.Price}',TotalPrice='${req.body.TotalAmount}',PaidPrice='${req.body.Paid}',ReceivedOn='${req.body.ReceivedDate}',ReceivedBy='${req.body.ReceivedBy}' where SystemInvoiceId=${req.body.InvoiceID}`;
+        var query = `Update TransportOrderInformation set Sender='${req.body.SenderName}',Receiver='${req.body.ReceiverName}',SenderMobileNo='${req.body.SenderMobile}',ReceiverMobileNo='${req.body.ReceiverMobile}',ItemInfo='${req.body.ItemInfo}',Quantity='${req.body.Quantity}',UnitPrice='${req.body.Price}',TotalPrice='${req.body.TotalAmount}',PaidPrice='${req.body.Paid}',ReceivedOn='${req.body.ReceivedDate}',ReceivedBy='${req.body.ReceivedBy}',ETag='${date}' where SystemInvoiceId=${req.body.InvoiceID}`;
 
         console.log('Query - ' + query);
         db = await sql.connect(configs.dbConfig);
