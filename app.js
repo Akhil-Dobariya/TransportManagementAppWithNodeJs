@@ -5,7 +5,9 @@ const guid = require('guid');
 const transportOrder = require('./Controllers/TransportOrder');
 const adminTasks = require('./Controllers/AdminTaskController');
 const app = express();
-var IsLoggedIn = false;
+const session = require('express-session')
+
+//var IsLoggedIn = false;
 
 //for logging
 const morgan = require('morgan');
@@ -16,19 +18,32 @@ app.set('view engine','ejs');
 
 app.listen('3001');
 
+app.use(session({
+  
+    // It holds the secret key for session
+    secret: '1',
+    // Forces the session to be saved
+    // back to the session store
+    resave: true,
+  
+    // Forces a session that is "uninitialized"
+    // to be saved to the store
+    saveUninitialized: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(morgan('dev'));
 app.use(express.static('public'));
-app.use(express.static('JavaScriptSPA'))
+app.use(express.static('JavaScriptSPA'));
 
-
-app.use('/css', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/css')))
-app.use('/js', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/js')))
-app.use('/js', express.static(path.join(__dirname, 'node_modules/jquery/dist')))
+app.use('/css', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/css')));
+app.use('/js', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/js')));
+app.use('/js', express.static(path.join(__dirname, 'node_modules/jquery/dist')));
 
 app.get('*',(req,res,next)=>{
-    console.log('Middlewareee');
+    console.log('Middlewareee ' + req.session);
+    console.log(req.session);
     console.log(req.url);
 
     if(req.url.indexOf('login') != -1 ){
@@ -36,13 +51,20 @@ app.get('*',(req,res,next)=>{
     var login = loginqstr.split('=')[1];
 
     if(login==1){
-        IsLoggedIn = true;
+        console.log(req.session);
+        //IsLoggedIn = true;
+        req.session.name = "test";
+        req.session.IsAuthenticated=true;
+        console.log('authenticated');
     }
 }
-    if (IsLoggedIn) {
+    if (req.session.IsAuthenticated == true) {
+        console.log('user authenticated');
         next();
     } else {
         console.log('Not Logged In, Redirecting to sign in page');
+        console.log(req.session);
+        req.session.IsAuthenticated=false;
         //res.redirect(__dirname+'/JavaScriptSPA/index');
         //res.sendFile(path.join(__dirname + '/JavaScriptSPA/index.html'));
         res.redirect('/');
@@ -53,15 +75,8 @@ app.get('/home',(req,res)=>{
 console.log('home comingg');
     // var loginqstr = req.url.split('?')[1];
     // var login = loginqstr.split('=')[1];
-
-    if(IsLoggedIn){
-        IsLoggedIn = true;
-        res.status(200).render('index');
-    }
-    else{
-
-    }
-
+    res.status(200).render('index');
+    
     //res.redirect('index');
 });
 
