@@ -3,6 +3,7 @@ const path = require('path');
 const bodyparser = require('body-parser');
 const guid = require('guid');
 const transportOrder = require('./Controllers/TransportOrder');
+const adminTasks = require('./Controllers/AdminTaskController');
 const app = express();
 
 //for logging
@@ -42,6 +43,24 @@ app.get('/TransportOrder/ViewOrder',transportOrder.ViewOrder);
 app.get('/TransportOrder/EditOrder',transportOrder.EditOrder);
 
 app.post('/TransportOrder/EditOrder',transportOrder.UpdateOrder);
+
+app.get('/TransportOrder/DeleteOrder',transportOrder.DeleteOrder);
+
+app.get('/AdminTasks/Tasks',adminTasks.AdminTaskIndex);
+
+app.get('/AdminTasks/Task/CreateUser',adminTasks.CreateUserForm);
+
+app.get('/AdminTasks/Task/ViewUsers',adminTasks.ViewAllUsers);
+
+app.post('/AdminTasks/Task/CreateUser',adminTasks.CreateUser);
+
+app.get('/AdminTasks/Task/ViewUser',adminTasks.ViewUser);
+
+app.get('/AdminTasks/Task/EditUser',adminTasks.EditUser);
+
+app.post('/AdminTasks/Task/EditUser',adminTasks.UpdateUser);
+
+app.get('/AdminTasks/Task/DeleteUser',adminTasks.DeleteUser);
 
 // app.post('/TransportOrder/Create',(req,res)=>{
 //     console.log(req.body);

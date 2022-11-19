@@ -1,0 +1,63 @@
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Transport Management</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="/js/jquery.min.js"></script>
+
+    <style>
+        .table {
+            margin-top: 10px;
+            bottom: 0;
+            height: 400px;
+            margin-left: 0px;
+            border: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <%- include('../partials/navbar.ejs') %>
+    </header>
+
+<% if(data!=null){%>
+<div class="container">
+    <table class="table table-responsive table-hover" style="top:80px;">
+        <thead style="position:sticky;background-color: darkgray;" class="thead-dark">
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">First Name</th>
+                <th scope="col">Last Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Permissions</th>
+                <th scope="col">CreatedBy</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% data.forEach(item => { %>
+            <tr>
+                <th scope="row"><%=item.ID%></th>
+                <td><%=item.FirstName%></td>
+                <td><%=item.LastName%></td>
+                <td><%=item.Email%></td>
+                <td><%=item.Permissions%></td>
+                <td><%=item.CreatedBy%></td>
+
+                <td>
+                    <a href="ViewUser?UserId=<%=item.ID%>">View</a>
+                    <a href="EditUser?UserId=<%=item.ID%>">Edit</a>
+                    <a href="DeleteUser?UserId=<%=item.ID%>">Delete</a>
+                </td>
+            </tr>
+            <%})%>
+        </tbody>
+    </table>
+</div>
+<%}%>
+</body>
+
+</html>

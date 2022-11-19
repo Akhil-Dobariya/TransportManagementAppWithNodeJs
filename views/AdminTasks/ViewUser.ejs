@@ -1,0 +1,87 @@
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+        <title>Transport Management</title>
+        <link rel="stylesheet" href="/css/bootstrap.min.css">
+        <script src="/js/jquery.min.js"></script>
+        
+    </head>
+    <body>
+        <header>
+            <%- include('../partials/navbar.ejs')%>
+        </header>
+        <div class="container">
+
+            <input type="hidden" id="Permissions" name="Permissions" />
+            <input type="hidden" id="CreatedBy" name="CreatedBy" value="<%=data.CreatedBy%>" />
+        
+            <div class="form-group row">
+                <label for="FirstName" class="col-sm-2 col-form-label">First Name</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" id="FirstName" placeholder="FirstName" name="FirstName" value="<%=data.FirstName%>">
+                </div>
+            </div>
+            <br/>
+            <div class="form-group row">
+                <label for="LastName" class="col-sm-2 col-form-label">Last Name</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" id="LastName" placeholder="LastName" name="LastName" value="<%=data.LastName%>">
+                </div>
+            </div>
+            <br/>
+            <div class="form-group row">
+                <label for="Email" class="col-sm-2 col-form-label">Email</label>
+                <div class="col-sm-8">
+                    <input type="email" class="form-control" id="Emaid" placeholder="Email" name="Email" value="<%=data.Email%>">
+                </div>
+            </div>
+            <br/>
+            <div class="form-group row">
+                <div class="col-sm-2">Permissions</div>
+                <div class="col-sm-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="IsAdmin" value="Admin" name="IsAdmin" >
+                        <label class="form-check-label" for="IsAdmin">
+                            Is Admin ?
+                        </label>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="CanSeeOthersData" value="CanSeeOthersData" name="CanSeeOthersData" >
+                        <label class="form-check-label" for="CanSeeOthersData">
+                            Can see other's data ?
+                        </label>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="CanEditUsers" value="CanEditUsers" name="CanEditUsers" >
+                        <label class="form-check-label" for="CanEditUsers">
+                            Can edit users ?
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+            var admin = $("#IsAdmin");
+            var othersData = $("#CanSeeOthersData");
+            var editUser = $("#CanEditUsers");
+        
+            if ("<%=data.Permissions%>".indexOf('Admin') != -1) {
+                admin.prop("checked","checked");
+            }
+        
+            if ("<%=data.Permissions%>".indexOf('CanSeeOthersData') != -1) {
+                othersData.prop("checked", "checked");
+            }
+        
+            if ("<%=data.Permissions%>".indexOf('CanEditUsers') != -1) {
+                editUser.prop("checked", "checked");
+            }
+        </script>
+    </body>
+</html>

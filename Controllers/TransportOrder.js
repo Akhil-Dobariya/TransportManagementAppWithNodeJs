@@ -50,17 +50,19 @@ async function CreateOrder(req, res){
         data = await db.request().query(query);
         console.log(data);
 
-        var tempDate = helper.GetYYYYMMDDdate(data.recordset[0].InvoiceDate);
+        // var tempDate = helper.GetYYYYMMDDdate(data.recordset[0].InvoiceDate);
 
-        data.recordset[0].InvoiceDate = tempDate;
-        console.log("InvoiceDate - "+data.recordset[0].InvoiceDate);
+        // data.recordset[0].InvoiceDate = tempDate;
+        // console.log("InvoiceDate - "+data.recordset[0].InvoiceDate);
 
-        tempDate = helper.GetYYYYMMDDdate(data.recordset[0].ReceivedOn);
+        // tempDate = helper.GetYYYYMMDDdate(data.recordset[0].ReceivedOn);
 
-        data.recordset[0].ReceivedOn = tempDate;
-        console.log("ReceivedOn - "+data.recordset[0].ReceivedOn);
+        // data.recordset[0].ReceivedOn = tempDate;
+        // console.log("ReceivedOn - "+data.recordset[0].ReceivedOn);
 
-        res.status(200).render('TransportOrder/View',{data:data.recordset[0]});
+        //res.status(200).render('TransportOrder/View',{data:data.recordset[0]});
+
+        res.redirect('ViewOrder?invoiceID='+data.recordset[0].SystemInvoiceId);
     } catch (error) {
         console.log(error);
     }
@@ -169,6 +171,30 @@ async function ViewOrder(req,res){
     }
 }
 
+async function DeleteOrder(req,res){
+    console.log(req.url);
+    var invoiceIdStr = req.url.split('?')[1];
+    var invoiceId = invoiceIdStr.split('=')[1];
+    console.log('InvoiceID '+invoiceId);
+
+    let db = null;
+    try {
+        db = await sql.connect(configs.dbConfig);
+        var query = `Update TransportOrderInformation set IsActive=0 where SystemInvoiceId=${invoiceId}`;
+        let data = await db.request().query(query);
+
+        res.redirect('Orders');
+    } catch (error) {
+        console.log(error);
+    }
+    finally{
+        if(db != null){
+            console.log('closing db connnection');
+        db.close();
+        }
+    }
+}
+
 async function EditOrder(req,res){
     console.log(req.url);
     var invoiceIdStr = req.url.split('?')[1];
@@ -208,7 +234,7 @@ async function ViewAllOrders(req,res){
     let db = null;
     try {
         db = await sql.connect(configs.dbConfig);
-        let data = await db.request().query("select top 12 * from TransportOrderInformation");
+        let data = await db.request().query("select top 12 * from TransportOrderInformation where IsActive=1");
         console.log('data from query' + data);
         console.log(data);
         res.status(200).render('TransportOrder/OrderList',{data:data.recordset});
@@ -228,5 +254,6 @@ module.exports = {
     ViewAllOrders,
     ViewOrder,
     EditOrder,
-    UpdateOrder
+    UpdateOrder,
+    DeleteOrder
 };

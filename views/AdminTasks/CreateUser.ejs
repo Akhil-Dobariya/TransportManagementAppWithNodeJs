@@ -1,0 +1,92 @@
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+        <title>Transport Management</title>
+        <link rel="stylesheet" href="/css/bootstrap.min.css">
+        <script src="/js/jquery.min.js"></script>
+        <script>
+
+            function AddPermissions(arg)
+            {
+                var abc = ""
+        //Iterating the collection of checkboxes which checked marked
+                $('input[type=checkbox]').each(function () {
+                    if (this.checked) {
+                        abc = abc + $(this).val() + "|"
+                        //assign set value to hidden field
+                        $('#Permissions').val(abc);
+                    }
+                });
+        
+            }
+        </script>
+    </head>
+    <body>
+        <header>
+            <%- include('../partials/navbar.ejs')%>
+        </header>
+        <div class="container">
+            <form action="CreateUser" method="post">
+
+                <input type="hidden" id="Permissions" name="Permissions"/>
+                <input type="hidden" id="CreatedBy" name="CreatedBy" value='To be decided'/>
+            
+                <div class="form-group row">
+                    <label for="FirstName" class="col-sm-2 col-form-label">First Name</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="FirstName" placeholder="FirstName" name="FirstName">
+                    </div>
+                </div>
+                <br/>
+                <div class="form-group row">
+                    <label for="LastName" class="col-sm-2 col-form-label">Last Name</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="LastName" placeholder="LastName" name="LastName">
+                    </div>
+                </div>
+                <br/>
+                <div class="form-group row">
+                    <label for="Email" class="col-sm-2 col-form-label">Email</label>
+                    <div class="col-sm-8">
+                        <input type="email" class="form-control" id="Emaid" placeholder="Email" name="Email">
+                    </div>
+                </div>
+                <br/>
+                <div class="form-group row">
+                    <div class="col-sm-2">Permissions</div>
+                    <div class="col-sm-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="IsAdmin" value="Admin" name="IsAdmin">
+                            <label class="form-check-label" for="IsAdmin">
+                                Is Admin ?
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="CanSeeOthersData" value="CanSeeOthersData" name="CanSeeOthersData">
+                            <label class="form-check-label" for="CanSeeOthersData">
+                                Can see other's data ?
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="CanEditUsers" value="CanEditUsers" name="CanEditUsers">
+                            <label class="form-check-label" for="CanEditUsers">
+                                Can edit users ?
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+                <div class="form-group row">
+                    <div class="col-sm-10">
+                        <button type="submit" class="btn btn-primary" onclick="AddPermissions()">Create</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </body>
+</html>
