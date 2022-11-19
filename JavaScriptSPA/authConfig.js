@@ -6,7 +6,7 @@ const msalConfig = {
   auth: {
     clientId: "65ebfed4-c839-4c1c-85be-89a46f962ebf",
     authority: "https://login.microsoftonline.com/76fd304f-abb0-4481-be53-780b85d26afc",
-    redirectUri: "http://localhost:3000/redirect",
+    redirectUri: "http://localhost:3001/home",
   },
   cache: {
     cacheLocation: "sessionStorage", // This configures where your cache will be stored

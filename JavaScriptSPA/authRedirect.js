@@ -15,6 +15,8 @@ function authRedirectCallBack(error, response) {
           console.log("id_token acquired at: " + new Date().toString()); 
           
           if (myMSALObj.getAccount()) {
+            console.log('executing rediret');
+            response.redirect('/index');
             showWelcomeMessage(myMSALObj.getAccount());
           }
 

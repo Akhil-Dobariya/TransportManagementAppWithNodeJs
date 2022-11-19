@@ -10,7 +10,8 @@ function signIn() {
       console.log(loginResponse);
       
       if (myMSALObj.getAccount()) {
-        showWelcomeMessage(myMSALObj.getAccount());
+        console.log('loggedin redirecting');
+        location.href='home?login=1';
       }
     }).catch(error => {
       console.log(error);
