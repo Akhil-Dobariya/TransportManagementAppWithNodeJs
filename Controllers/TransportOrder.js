@@ -3,6 +3,7 @@ const sql = require('mssql');
 const configs = require('../Configurations/appConfiguration');
 const helper = require('../Helpers/Helper');
 var qs = require('querystring');
+const session = require("express-session");
 
 class TransportOrder{
     Create(data){
@@ -230,13 +231,65 @@ async function EditOrder(req,res){
     }
 }
 
-async function ViewAllOrders(req,res){
+async function ViewOrdersByDate(req,res){
+    console.log('ViewOrdersDateWise');
+    console.log(req.body);
     let db = null;
     try {
+        var pageNo = 1;
+        var fromDate = '';
+        var toDate = '';
+
+        if(req.body.pageToFetch !== undefined){
+            pageNo = req.body.pageToFetch;
+        }
+
+        if(req.body.fromDate !== undefined){
+            fromDate = req.body.fromDate;
+            session.fromDate = req.body.fromDate;
+        }
+        else{
+            fromDate = session.fromDate;
+        }
+
+        if(req.body.toDate !== undefined){
+            toDate = req.body.toDate;
+            session.toDate = req.body.toDate;
+        }
+        else{
+            toDate = session.toDate;
+        }
+
+        db = await sql.connect(configs.dbConfig);
+        var query = `exec GetInvoicesByDatenPage @fromDate='${fromDate}',@toDate='${toDate}',@pageNo='${pageNo}',@rowsPerPage='10'`;
+        console.log(query);
+        let data  = await db.request().query(query);
+        //let data = await db.request().query("select top 12 * from TransportOrderInformation where IsActive=1");
+        console.log('data from query' + data);
+        //console.log(data);
+        res.status(200).render('TransportOrder/OrderList',{data:data.recordset});
+    } catch (error) {
+        console.log(error);
+    }
+    finally{
+        if(db != null){
+            console.log('closing db connnection');
+        db.close();
+        }
+    }
+}
+
+async function ViewAllOrders(req,res){
+    console.log('ViewOrdersDateWise');
+    console.log(req.body);
+    let db = null;
+    try {
+
+        //console.log(req.session);
         db = await sql.connect(configs.dbConfig);
         let data = await db.request().query("select top 12 * from TransportOrderInformation where IsActive=1");
         console.log('data from query' + data);
-        console.log(data);
+        //console.log(data);
         res.status(200).render('TransportOrder/OrderList',{data:data.recordset});
     } catch (error) {
         console.log(error);
@@ -255,5 +308,6 @@ module.exports = {
     ViewOrder,
     EditOrder,
     UpdateOrder,
-    DeleteOrder
+    DeleteOrder,
+    ViewOrdersByDate
 };

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>Login | TransportManagement</title>
     <link rel="SHORTCUT ICON" href="./favicon.svg" type="image/x-icon">
+    <script src="../js/jquery.min.js"></script>
     <!-- msal.min.js can be used in the place of msal.js; included msal.js to make debug easy -->
     <script type="text/javascript" src="https://alcdn.msauth.net/lib/1.4.4/js/msal.js" integrity="sha384-fTmwCjhRA6zShZq8Ow5ZkbWwmgp8En46qW6yWpNEkp37MkV50I/V2wjzlEkQ8eWD" crossorigin="anonymous"></script>
     
@@ -73,11 +74,28 @@
     <script type="text/javascript" src="./graph.js"></script>
 
     <script type="text/javascript">
-        $(document).ready(async function(){
-          var resultt = await signIn();
-          console.log(resultt);
-          console.log('SingedInfromDirectfunctionnnn');
+      var testt = "<%=originalReqURL%>";
+      console.log(testt);
+      console.log(sessionStorage.getItem('urlToRedirect'));
+        $(document).ready(function(){
+          signIn();
         });
+
+        function authRedirectt(){
+          $.ajax({
+          type: "POST",
+          url: '/LoginAuthReq',
+          data: {IsLoggedIn:1},
+          dataType: "json",
+          contentType: "application/json; charset=utf-8",
+          success: function (data) {
+             console.log(data);
+          },
+          error: function () {
+              alert("Error while setting login session");
+          }
+      });
+        }
     </script>
   </body>
 </html>

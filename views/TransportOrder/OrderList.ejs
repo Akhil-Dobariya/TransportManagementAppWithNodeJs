@@ -21,10 +21,12 @@
 </head>
 <body>
     <header>
-        <%- include('../partials/navbar.ejs')%>
+        <%- include('../partials/navbar.ejs')%> 
+        
     </header>
 <% if (data != null){ %>
 <div class="container">
+    <%- include('../partials/DateElement.ejs')%>
     <table class="table table-responsive table-hover" style="width:1100px;">
         <thead style="position:sticky; top:0px;background-color: darkgray;" class="thead-dark">
             <tr>
@@ -58,11 +60,74 @@
         </tbody>
     </table>
     <div class="row">
-        <a href="https:///Administration/GetInvoicesByDatenPage?pageToGet=Previous" id="Previous" class="btn btn-primary col-sm-1 offset-3">Previous</a>
+        <form action="/TransportOrder/Orders" method="post">
+            <input type="hidden" id="clickedButton" name="clickedButton"/>
+            <input type="hidden" id="pageToFetch" name="pageToFetch" />
+            <div class="form-group">
+            <button type="submit" class="btn btn-primary col-sm-1 offset-3" id="previous" style="display: inline;">Previous</button>
+            <div id="pageNumber" class="col-sm-1 offset-1" style="display:inline;"></div>
+            <button type="submit" class="btn btn-primary col-sm-1 offset-1" id="next" style="display: inline;">Next</button>
+            </div>
+        </form>
+
+        <!-- <a href="https:///Administration/GetInvoicesByDatenPage?pageToGet=Previous" id="Previous" class="btn btn-primary col-sm-1 offset-3">Previous</a>
         <div id="pageNumber" class="col-sm-1 offset-1"></div>
-        <a href="https:///Administration/GetInvoicesByDatenPage?pageToGet=Next" id="Next" class="btn btn-primary col-sm-1 offset-1">Next</a>
+        <a href="https:///Administration/GetInvoicesByDatenPage?pageToGet=Next" id="Next" class="btn btn-primary col-sm-1 offset-1">Next</a> -->
     </div>
 </div>
 <%}%>
 </body>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var fromDate = sessionStorage.getItem("fromDate");
+        var toDate = sessionStorage.getItem("toDate");
+        var currentPage = sessionStorage.getItem("PageNo");
+
+        $("#fromDate").val(fromDate);
+        $("#toDate").val(toDate);
+
+        if (currentPage == null) {
+            sessionStorage.setItem("PageNo", "1");
+            $("#pageNumber").text("1");
+        }
+        else {
+            $("#pageNumber").text(currentPage);
+        }
+    });
+
+    $("#next").on("click", function () {
+        sessionStorage.setItem("PageNo", parseInt($("#pageNumber").text())+1 );
+        $("#clickedButton").val('next');
+        $("#pageToFetch").val(parseInt($("#pageNumber").text())+1);
+    });
+
+    $("#previous").on("click", function () {
+        
+        $("#clickedButton").val('previous');
+
+        var pageNoVal = parseInt($("#pageNumber").text());
+
+        if(pageNoVal > 1){
+            $("#pageToFetch").val(parseInt($("#pageNumber").text())-1);
+            sessionStorage.setItem("PageNo", parseInt($("#pageNumber").text()) - 1);
+        }
+        else{
+            $("#pageToFetch").val('1');
+            sessionStorage.setItem("PageNo",'1');
+        }
+        
+    });
+
+    $("#submit").on("click", function () {
+        var fromDate = $("#fromDate").val();
+        var toDate = $("#toDate").val();
+
+        sessionStorage.setItem("fromDate", fromDate);
+        sessionStorage.setItem("toDate", toDate);
+
+        sessionStorage.setItem("PageNo", "1");
+    });
+</script>
+
 </html>
