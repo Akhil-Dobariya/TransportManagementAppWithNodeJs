@@ -2,6 +2,7 @@ const { json } = require("body-parser");
 const sql = require('mssql');
 const configs = require('../Configurations/appConfiguration');
 const helper = require('../Helpers/Helper');
+const session = require("express-session");
 
 async function AdminTaskIndex(req,res){
     res.status(200).render('./AdminTasks/index');
@@ -62,13 +63,30 @@ async function EditUser(req,res){
 }
 
 async function ViewAllUsers(req,res){
+    console.log('ViewAllUsers');
+    console.log(req.body);
     let db = null;
     try {
+        var pageNo = 1;
+        var searchKey = '';
+
+        if(req.body.pageToFetch !== undefined){
+            pageNo = req.body.pageToFetch;
+        }
+
+        if(searchKey==''||searchKey==undefined)
+        {
+            searchKey='@';
+        }
+
         db = await sql.connect(configs.dbConfig);
-        let data = await db.request().query("select top 12 * from Users where IsActive=1");
+        var query = `exec GetUsersByKeyWordSearch @keyWord='${searchKey}',@pageNo='${pageNo}',@rowsPerPage='10'`;
+        console.log(query);
+        let data  = await db.request().query(query);
+        //let data = await db.request().query("select top 12 * from TransportOrderInformation where IsActive=1");
         console.log('data from query' + data);
-        console.log(data);
-        res.status(200).render('./AdminTasks/ViewAllUsers',{data:data.recordset});
+        //console.log(data);
+        res.status(200).render('AdminTasks/ViewAllUsers',{data:data.recordset});
     } catch (error) {
         console.log(error);
     }
@@ -140,6 +158,50 @@ async function DeleteUser(req,res){
     }
 }
 
+async function ViewUsers(req,res){
+    console.log('ViewUserUsingSearch');
+    console.log(req.body);
+    let db = null;
+    try {
+        var pageNo = 1;
+        var searchKey = '';
+
+        if(req.body.pageToFetch !== undefined){
+            pageNo = req.body.pageToFetch;
+        }
+
+        if(req.body.SearchUser !== undefined){
+            searchKey = req.body.SearchUser;
+            session.searchKey = req.body.SearchUser;
+        }
+        else{
+            searchKey = session.searchKey;
+        }
+
+        if(searchKey==''||searchKey==undefined)
+        {
+            searchKey='@';
+        }
+
+        db = await sql.connect(configs.dbConfig);
+        var query = `exec GetUsersByKeyWordSearch @keyWord='${searchKey}',@pageNo='${pageNo}',@rowsPerPage='10'`;
+        console.log(query);
+        let data  = await db.request().query(query);
+        //let data = await db.request().query("select top 12 * from TransportOrderInformation where IsActive=1");
+        console.log('data from query' + data);
+        //console.log(data);
+        res.status(200).render('AdminTasks/ViewAllUsers',{data:data.recordset});
+    } catch (error) {
+        console.log(error);
+    }
+    finally{
+        if(db != null){
+            console.log('closing db connnection');
+        db.close();
+        }
+    }
+}
+
 async function CreateUser(req,res){
     
     console.log(req.body);
@@ -184,5 +246,6 @@ module.exports={
     ViewUser,
     EditUser,
     UpdateUser,
-    DeleteUser
+    DeleteUser,
+    ViewUsers
 }

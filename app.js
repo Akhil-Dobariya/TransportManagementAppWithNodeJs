@@ -166,6 +166,10 @@ app.post('/AdminTasks/Task/CreateUser', adminTasks.CreateUser);
 
 app.get('/AdminTasks/Task/ViewUser', adminTasks.ViewUser);
 
+app.get('/AdminTaskController/ViewUsers', adminTasks.ViewUsers);
+
+app.post('/AdminTaskController/ViewUsers', adminTasks.ViewUsers);
+
 app.get('/AdminTasks/Task/EditUser', adminTasks.EditUser);
 
 app.post('/AdminTasks/Task/EditUser', adminTasks.UpdateUser);

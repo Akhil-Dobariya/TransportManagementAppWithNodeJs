@@ -231,6 +231,47 @@ async function EditOrder(req,res){
     }
 }
 
+async function ViewAllOrders(req,res){
+    console.log('ViewAllOrders');
+    console.log(req.body);
+    let db = null;
+    try {
+        let date_ob = new Date();
+        const date = `${date_ob.getUTCFullYear()}-${("0"+(date_ob.getUTCMonth()+1)).slice(-2)}-${("0"+date_ob.getUTCDate()).slice(-2)} ${("0"+date_ob.getUTCHours()).slice(-2)}:${("0"+date_ob.getUTCMinutes()).slice(-2)}:${("0"+date_ob.getUTCSeconds()).slice(-2)}.000`;
+        console.log('Today ' + date);
+
+        var pageNo = 1;
+        var fromDate = '';
+        var toDate = '';
+
+        if(req.body.pageToFetch !== undefined){
+            pageNo = req.body.pageToFetch;
+        }
+
+        fromDate = '1900-01-01 00:00:00.000';
+        toDate = date;
+        session.fromDate = fromDate;
+        session.toDate = toDate;
+
+        db = await sql.connect(configs.dbConfig);
+        var query = `exec GetInvoicesByDatenPage @fromDate='${fromDate}',@toDate='${toDate}',@pageNo='${pageNo}',@rowsPerPage='10'`;
+        console.log(query);
+        let data  = await db.request().query(query);
+        //let data = await db.request().query("select top 12 * from TransportOrderInformation where IsActive=1");
+        console.log('data from query' + data);
+        //console.log(data);
+        res.status(200).render('TransportOrder/OrderList',{data:data.recordset});
+    } catch (error) {
+        console.log(error);
+    }
+    finally{
+        if(db != null){
+            console.log('closing db connnection');
+        db.close();
+        }
+    }
+}
+
 async function ViewOrdersByDate(req,res){
     console.log('ViewOrdersDateWise');
     console.log(req.body);
@@ -279,28 +320,29 @@ async function ViewOrdersByDate(req,res){
     }
 }
 
-async function ViewAllOrders(req,res){
-    console.log('ViewOrdersDateWise');
-    console.log(req.body);
-    let db = null;
-    try {
+// async function ViewAllOrders(req,res){
+//     console.log('ViewOrdersDateWise');
+//     console.log(req.body);
+//     let db = null;
+//     try {
 
-        //console.log(req.session);
-        db = await sql.connect(configs.dbConfig);
-        let data = await db.request().query("select top 12 * from TransportOrderInformation where IsActive=1");
-        console.log('data from query' + data);
-        //console.log(data);
-        res.status(200).render('TransportOrder/OrderList',{data:data.recordset});
-    } catch (error) {
-        console.log(error);
-    }
-    finally{
-        if(db != null){
-            console.log('closing db connnection');
-        db.close();
-        }
-    }
-}
+//         //console.log(req.session);
+//         db = await sql.connect(configs.dbConfig);
+//         let data = await db.request().query("select top 12 * from TransportOrderInformation where IsActive=1");
+//         console.log('data from query' + data);
+//         //console.log(data);
+//         // res.status(200).render('TransportOrder/OrderList',{data:data.recordset});
+//         res.status(200).render('TransportOrder/OrderList',{data:null});
+//     } catch (error) {
+//         console.log(error);
+//     }
+//     finally{
+//         if(db != null){
+//             console.log('closing db connnection');
+//         db.close();
+//         }
+//     }
+// }
 
 module.exports = {
     CreateOrder,
