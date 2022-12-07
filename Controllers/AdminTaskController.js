@@ -3,6 +3,7 @@ const sql = require('mssql');
 const configs = require('../Configurations/appConfiguration');
 const helper = require('../Helpers/Helper');
 const session = require("express-session");
+const bcrypt = require('bcrypt')
 
 async function AdminTaskIndex(req,res){
     res.status(200).render('./AdminTasks/index');
@@ -212,8 +213,10 @@ async function CreateUser(req,res){
 
     let db = null;
     try {
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassWord = await bcrypt.hash(req.body.Password,salt)
 
-        var query = `Insert into Users(FirstName,LastName,Email,Permissions,CreatedDate,ETag,CreatedBy,IsActive) values ('${req.body.FirstName}','${req.body.LastName}','${req.body.Email}','${req.body.Permissions}','${date}','${date}','${req.body.CreatedBy}','1')`;
+        var query = `Insert into Users(FirstName,LastName,Email,Permissions,CreatedDate,ETag,CreatedBy,IsActive,Password) values ('${req.body.FirstName}','${req.body.LastName}','${req.body.Email}','${req.body.Permissions}','${date}','${date}','${req.body.CreatedBy}','1','${hashedPassWord}')`;
 
         console.log('Query - ' + query);
         db = await sql.connect(configs.dbConfig);

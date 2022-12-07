@@ -7,6 +7,9 @@ const adminTasks = require('./Controllers/AdminTaskController');
 const app = express();
 const session = require('express-session')
 var cookie = require('cookie');
+const AuthRoute = require('./Routes/Auth.route')
+const JWTHelper = require('./Helpers/jwt_helper')
+const { signAccessToken, signRefreshToken } = require('./Helpers/jwt_helper')
 
 //var IsLoggedIn = false;
 
@@ -35,79 +38,145 @@ app.use(session({
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(morgan('dev'));
-app.use(express.static('public'));
-app.use(express.static('JavaScriptSPA'));
+//app.use(express.static('public'));
+//app.use(express.static('JavaScriptSPA'));
 
 app.use('/css', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/css')));
 app.use('/js', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/js')));
 app.use('/js', express.static(path.join(__dirname, 'node_modules/jquery/dist')));
+
+app.get('*',async (req,res,next)=>{
+    console.log('Hitting Middleware ' + req.url)
+
+    if(req.url === '/' || req.url.indexOf('login') != -1){
+        next()
+    }
+    else{
+        if(req.sessionStore.accessToken === undefined || req.sessionStore.accessToken === '' || req.sessionStore.accessToken === {}){
+            res.redirect('/')
+        }
+        else{
+            const accessToken = req.sessionStore.accessToken
+            const refreshToken = req.sessionStore.refreshToken
+
+            try {
+                await JWTHelper.verifyAccessToken(req,res,next).then((payload)=>{
+                    if(payload.aud == req.sessionStore.userid){
+                        next()
+                    }
+                    else{
+                        console.log('prommise resolved but aud not matching')
+                    }
+                }).catch((err)=>{
+                    console.log(err)
+
+                    if (err.name === "TokenExpiredError") {
+                        console.log('TokenExpired Renewing')
+                        req.sessionStore.accessToken = signAccessToken(req.sessionStore.userid)
+                        req.sessionStore.refreshToken = signRefreshToken(req.sessionStore.userid)
+
+                        next()
+                    }
+                    else{
+                        res.redirect('login')
+                    }
+                })
+
+                // if(req.payload.aud == req.session.userid){
+                //     next()
+                // }
+                // else{
+    
+                // }
+            } catch (error) {
+                if (err.name === "JsonWebTokenError") {
+                    console.log(err.message)
+                    res.render('/login')
+                }
+                else if (err.name === "TokenExpiredError") {
+                    req.sessionStore.accessToken = signAccessToken(req.sessionStore.userid)
+                    req.sessionStore.refreshToken = signRefreshToken(req.sessionStore.userid)
+                }
+                else {
+                    return next(createError.Unauthorized(err.message))
+                }
+            }
+            
+            
+        }
+    }
+})
+
+app.use('/auth', AuthRoute)
 
 app.post('/LoginAuthReq',(req,res,next)=>{
     console.log('login auth req');
 
     console.log(req.body);
     console.log(req.body.IsLoggedIn);
-    
 });
 
-app.get('*', (req, res, next) => {
-    console.log('Middlewareee ' + req.session);
-    console.log(req.session);
-    console.log(req.url);
+app.post('/login',(req,res,next)=>{
+    console.log('login request');
 
-    // if (req.url.indexOf('login') != -1) {
-    //     var loginqstr = req.url.split('?')[1];
-    //     var login = loginqstr.split('=')[1];
+    console.log(req.body)
+    res.render('login')
 
-    //     //if (login.indexOf('1')!=-1) {
-    //         if (login==1) {
-    //         console.log(req.session);
-    //         //IsLoggedIn = true;
-    //         req.session.name = "test";
-    //         req.session.IsAuthenticated = true;
-    //         console.log('authenticated');
-    //     }
-    // }
-    if (req.session.IsAuthenticated == true) {
-        console.log('user authenticated');
-        next();
-    } else {
 
-        if (req.url.indexOf('login') != -1) {
-            var loginqstr = req.url.split('?')[1];
-            var login = loginqstr.split('=')[1];
-    
-            //if (login.indexOf('1')!=-1) {
-                if (login==1) {
-                console.log(req.session);
-                //IsLoggedIn = true;
-                req.session.name = "test";
-                req.session.IsAuthenticated = true;
-                console.log('authenticated');
-                next();
-            }
-        }
-
-        console.log('Not Logged In, Redirecting to sign in page');
-        req.session.IsAuthenticated = false;
-        //res.redirect(__dirname+'/JavaScriptSPA/index');
-        //res.sendFile(path.join(__dirname + '/JavaScriptSPA/index.html'));
-        //res.redirect('/auth?login=1&redirectURL='+req.url);
-        //res.redirect('/?login=1&redirectURL='+req.url);
-        res.redirect('/');
-    }
 });
 
+// app.get('*', (req, res, next) => {
+//     console.log('Middlewareee ' + req.session);
+//     console.log(req.session);
+//     console.log(req.url);
 
+//     // if (req.url.indexOf('login') != -1) {
+//     //     var loginqstr = req.url.split('?')[1];
+//     //     var login = loginqstr.split('=')[1];
+
+//     //     //if (login.indexOf('1')!=-1) {
+//     //         if (login==1) {
+//     //         console.log(req.session);
+//     //         //IsLoggedIn = true;
+//     //         req.session.name = "test";
+//     //         req.session.IsAuthenticated = true;
+//     //         console.log('authenticated');
+//     //     }
+//     // }
+//     if (req.session.IsAuthenticated == true) {
+//         console.log('user authenticated');
+//         next();
+//     } else {
+
+//         if (req.url.indexOf('login') != -1) {
+//             var loginqstr = req.url.split('?')[1];
+//             var login = loginqstr.split('=')[1];
+
+//             //if (login.indexOf('1')!=-1) {
+//                 if (login==1) {
+//                 console.log(req.session);
+//                 //IsLoggedIn = true;
+//                 req.session.name = "test";
+//                 req.session.IsAuthenticated = true;
+//                 console.log('authenticated');
+//                 next();
+//             }
+//         }
+
+//         console.log('Not Logged In, Redirecting to sign in page');
+//         req.session.IsAuthenticated = false;
+//         //res.redirect(__dirname+'/JavaScriptSPA/index');
+//         //res.sendFile(path.join(__dirname + '/JavaScriptSPA/index.html'));
+//         //res.redirect('/auth?login=1&redirectURL='+req.url);
+//         //res.redirect('/?login=1&redirectURL='+req.url);
+//         res.redirect('/');
+//     }
+// });
 
 app.get('/home', (req, res) => {
     console.log('home comingg');
-    
-    // var loginqstr = req.url.split('?')[1];
-    // var login = loginqstr.split('=')[1];
-    //res.status(200).render('index');
-
-    res.redirect('index');
+    res.render('index');
+    //res.render('login');
 });
 
 app.get('/logout', (req, res) => {
@@ -120,9 +189,12 @@ app.get('/', (req, res) => {
     console.log('firstrequesttt ' + req.url);
 
     console.log(req.sessionStore);
+
+    res.status(200).render('login')
+
     //res.sendFile(path.join(__dirname + '/JavaScriptSPA/index.html'));
     //res.redirect(__dirname+'/JavaScriptSPA/index');
-    res.status(200).render(__dirname+'/JavaScriptSPA/index.ejs',{originalReqURL:req.url});
+    //res.status(200).render(__dirname+'/JavaScriptSPA/index.ejs',{originalReqURL:req.url});
 });
 
 app.get('/auth', (req, res) => {
@@ -185,3 +257,18 @@ app.get('/AdminTasks/Task/DeleteUser', adminTasks.DeleteUser);
 
 //     res.redirect('/');
 // });
+
+app.use(async(req,res,next)=>{
+    res.redirect('/')
+    //next(createError.NotFound('This route does not exists'))
+})
+
+app.use((err,req,res,next)=>{
+    res.status(err.status || 500)
+    res.send({
+        error:{
+            status:err.status||500,
+            message:err.message
+        }
+    })
+})
