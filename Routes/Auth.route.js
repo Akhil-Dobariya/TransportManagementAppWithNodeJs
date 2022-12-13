@@ -72,6 +72,7 @@ router.post('/login', async(req,res,next)=>{
 
         if(data.recordset.length < 1){
             throw createError.NotFound("User not registered")
+            //res.render('login',{message:'User not registered'})
         }
 
         const isMatch = await bcrypt.compare(req.body.password,data.recordset[0].Password)
@@ -120,10 +121,24 @@ router.get('/logout', async(req,res,next)=>{
             }
 
             console.log('deleted-'+val)
+            // req.sessionStore.destroy(req.session.id)
+            // req.session.destroy()
+            //res.send('You have been logged out successfully...!!!')
+        })
+
+        redisClient.del(userId+"AccessToken",(err,val)=>{
+            if(err){
+                console.log(err.message)
+                throw createError.InternalServerError()
+            }
+
+            console.log('deleted-'+val)
+            
+        })
+
             req.sessionStore.destroy(req.session.id)
             req.session.destroy()
-            res.sendStatus(204)
-        })
+            res.send('You have been logged out successfully...!!!')
         
     } catch (error) {
         next(error)

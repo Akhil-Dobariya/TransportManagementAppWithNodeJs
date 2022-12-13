@@ -23,15 +23,34 @@ function signAccessToken(userId){
                     //reject(err)
                 }
                 else {
-                    resolve(token)
+                    //TODO : Redis Key Expiry logic to add
+                    redisClient.set(userId+'AccessToken', token,'EX',365*24*60*60, (err, reply) => {
+                        if (err) {
+                            console.log(err.message)
+                            reject(createError.InternalServerError())
+                            return
+                        }
+
+                        resolve(token)
+                    })
+
+                    //resolve(token)
                 }
             })
         })
 }
 
 async function verifyAccessToken(req,res,next){
-    const token = req.session.accessToken
-    console.log(req.session)
+    const token = req.sessionStore.accessToken
+    const userId = req.sessionStore.userid
+
+    if(!token){
+        return new Promise((resolve, reject) => {
+            reject('Token missing')
+        })
+    }
+
+    //console.log(req.session)
     return new Promise((resolve, reject) => {
         JWT.verify(token, configs.JWTConfig.ACCESS_TOKEN_SECRET, async (err, payload) => {
             if (err) {
@@ -53,7 +72,23 @@ async function verifyAccessToken(req,res,next){
                 }
             }
             else{
-                resolve(payload)
+
+                redisClient.get(userId+'AccessToken',(err,result)=>{
+                                        if(err){
+                                            console.log(err.message)
+                                            reject(createError.InternalServerError())
+                                            return
+                                        }
+                
+                                        console.log('accessToken- '+token)
+                                        console.log('fromredis- '+result)
+                                        if(token===result){
+                                            return resolve(payload)
+                                        }
+                
+                                        reject(createError.Unauthorized())
+                                    })
+                //resolve(payload)
             }
 
             //return payload

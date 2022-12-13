@@ -109,8 +109,10 @@ async function UpdateUser(req,res){
 
     let db = null;
     try {
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassWord = await bcrypt.hash(req.body.Password,salt)
 
-        var query = `Update Users set FirstName='${req.body.FirstName}',LastName='${req.body.LastName}',Email='${req.body.Email}',Permissions='${req.body.Permissions}',ETag='${date}',LastUpdatedBy='${req.body.LastUpdatedBy}1' where ID=${req.body.ID}`;
+        var query = `Update Users set FirstName='${req.body.FirstName}',LastName='${req.body.LastName}',Email='${req.body.Email}',Permissions='${req.body.Permissions}',ETag='${date}',LastUpdatedBy='${req.body.LastUpdatedBy}',Password='${hashedPassWord}' where ID=${req.body.ID}`;
 
         console.log('Query - ' + query);
         db = await sql.connect(configs.dbConfig);

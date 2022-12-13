@@ -9,7 +9,7 @@ const session = require('express-session')
 var cookie = require('cookie');
 const AuthRoute = require('./Routes/Auth.route')
 const JWTHelper = require('./Helpers/jwt_helper')
-const { signAccessToken, signRefreshToken } = require('./Helpers/jwt_helper')
+//const { signAccessToken, signRefreshToken } = require('./Helpers/jwt_helper')
 
 //var IsLoggedIn = false;
 
@@ -17,6 +17,7 @@ const { signAccessToken, signRefreshToken } = require('./Helpers/jwt_helper')
 const morgan = require('morgan');
 const TransportOrder = require('./Controllers/TransportOrder');
 const { json } = require('body-parser');
+const { response } = require('express');
 //register view engine
 app.set('view engine', 'ejs');
 
@@ -45,6 +46,10 @@ app.use('/css', express.static(path.join(__dirname, 'node_modules/bootstrap/dist
 app.use('/js', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/js')));
 app.use('/js', express.static(path.join(__dirname, 'node_modules/jquery/dist')));
 
+app.get('/favicon.ico', (req,res,next)=>{
+    res.send('')
+})
+
 app.get('*',async (req,res,next)=>{
     console.log('Hitting Middleware ' + req.url)
 
@@ -61,19 +66,78 @@ app.get('*',async (req,res,next)=>{
 
             try {
                 await JWTHelper.verifyAccessToken(req,res,next).then((payload)=>{
+                    console.log(payload)
                     if(payload.aud == req.sessionStore.userid){
                         next()
                     }
                     else{
                         console.log('prommise resolved but aud not matching')
                     }
-                }).catch((err)=>{
+                }).catch(async (err)=>{
+                    console.log(err)
+
+                    if (err.name === "TokenExpiredError") {
+                        console.log('Access token expired, checking refresh token')
+
+                        await JWTHelper.verifyRefreshToken(refreshToken).then(async (userId) =>{
+                            if(req.sessionStore.userid == userId){
+                                req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
+                                //req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
+                                next()
+                            }
+                        })
+                        .catch(async (err) => {
+                            console.log('error while verifying refresh token ' + err)
+                            res.redirect('/')
+                        })
+
+                        // req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
+                        // req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
+
+                        // next()
+                    }
+                    else{
+                        res.redirect('login')
+                    }
+                })
+            } catch (error) {
+                
+                    return next(createError.Unauthorized(err.message))
+            }
+        }
+    }
+})
+
+app.post('*',async (req,res,next)=>{
+    console.log('Hitting Middleware ' + req.url)
+
+    if(req.url === '/' || req.url.indexOf('login') != -1){
+        next()
+    }
+    else{
+        if(req.sessionStore.accessToken === undefined || req.sessionStore.accessToken === '' || req.sessionStore.accessToken === {}){
+            res.redirect('/')
+        }
+        else{
+            const accessToken = req.sessionStore.accessToken
+            const refreshToken = req.sessionStore.refreshToken
+
+            try {
+                await JWTHelper.verifyAccessToken(req,res,next).then((payload)=>{
+                    console.log(payload)
+                    if(payload.aud == req.sessionStore.userid){
+                        next()
+                    }
+                    else{
+                        console.log('prommise resolved but aud not matching')
+                    }
+                }).catch(async (err)=>{
                     console.log(err)
 
                     if (err.name === "TokenExpiredError") {
                         console.log('TokenExpired Renewing')
-                        req.sessionStore.accessToken = signAccessToken(req.sessionStore.userid)
-                        req.sessionStore.refreshToken = signRefreshToken(req.sessionStore.userid)
+                        req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
+                        req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
 
                         next()
                     }
@@ -81,28 +145,10 @@ app.get('*',async (req,res,next)=>{
                         res.redirect('login')
                     }
                 })
-
-                // if(req.payload.aud == req.session.userid){
-                //     next()
-                // }
-                // else{
-    
-                // }
             } catch (error) {
-                if (err.name === "JsonWebTokenError") {
-                    console.log(err.message)
-                    res.render('/login')
-                }
-                else if (err.name === "TokenExpiredError") {
-                    req.sessionStore.accessToken = signAccessToken(req.sessionStore.userid)
-                    req.sessionStore.refreshToken = signRefreshToken(req.sessionStore.userid)
-                }
-                else {
+                
                     return next(createError.Unauthorized(err.message))
-                }
             }
-            
-            
         }
     }
 })
@@ -185,10 +231,10 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    console.log('firstlogsleshrequesttt');
+    //console.log('firstlogsleshrequesttt');
     console.log('firstrequesttt ' + req.url);
 
-    console.log(req.sessionStore);
+    //console.log(req.sessionStore);
 
     res.status(200).render('login')
 
@@ -238,15 +284,23 @@ app.post('/AdminTasks/Task/CreateUser', adminTasks.CreateUser);
 
 app.get('/AdminTasks/Task/ViewUser', adminTasks.ViewUser);
 
+app.get('/AdminTaskController/ViewUser', adminTasks.ViewUser);
+
 app.get('/AdminTaskController/ViewUsers', adminTasks.ViewUsers);
 
 app.post('/AdminTaskController/ViewUsers', adminTasks.ViewUsers);
 
 app.get('/AdminTasks/Task/EditUser', adminTasks.EditUser);
 
+app.get('/AdminTaskController/EditUser', adminTasks.EditUser);
+
 app.post('/AdminTasks/Task/EditUser', adminTasks.UpdateUser);
 
+app.post('/AdminTaskController/EditUser', adminTasks.UpdateUser);
+
 app.get('/AdminTasks/Task/DeleteUser', adminTasks.DeleteUser);
+
+app.get('/AdminTaskController/DeleteUser', adminTasks.DeleteUser);
 
 // app.post('/TransportOrder/Create',(req,res)=>{
 //     console.log(req.body);
@@ -259,6 +313,7 @@ app.get('/AdminTasks/Task/DeleteUser', adminTasks.DeleteUser);
 // });
 
 app.use(async(req,res,next)=>{
+    console.log('redirectinggg '+ req.url)
     res.redirect('/')
     //next(createError.NotFound('This route does not exists'))
 })
