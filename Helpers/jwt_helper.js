@@ -40,9 +40,9 @@ function signAccessToken(userId){
         })
 }
 
-async function verifyAccessToken(req,res,next){
-    const token = req.sessionStore.accessToken
-    const userId = req.sessionStore.userid
+async function verifyAccessToken(token, userId){
+    // const token = req.sessionStore.accessToken
+    // const userId = req.sessionStore.userid
 
     if(!token){
         return new Promise((resolve, reject) => {
@@ -138,27 +138,27 @@ function verifyRefreshToken(refreshToken){
     return new Promise((resolve, reject) => {
         JWT.verify(refreshToken, configs.JWTConfig.REFRESH_TOKEN_SECRET, (err, payload) => {
             if (err) {
-                return reject(createError.Unauthorized())
+                return reject(err)
             }
             else {
-                const userId = payload.aud
+                //const userId = payload.aud
 
-                redisClient.get(userId+'RefreshToken',(err,result)=>{
-                    if(err){
-                        console.log(err.message)
-                        reject(createError.InternalServerError())
-                        return
-                    }
+                // redisClient.get(userId+'RefreshToken',(err,result)=>{
+                //     if(err){
+                //         console.log(err.message)
+                //         reject(createError.InternalServerError())
+                //         return
+                //     }
 
-                    console.log('refreshToken-'+refreshToken)
-                    console.log('fromredis-'+result)
-                    if(refreshToken===result){
-                        return resolve(userId)
-                    }
+                //     console.log('refreshToken-'+refreshToken)
+                //     console.log('fromredis-'+result)
+                //     if(refreshToken===result){
+                //         return resolve(userId)
+                //     }
 
-                    reject(createError.Unauthorized())
-                })
-
+                //     reject(createError.Unauthorized())
+                // })
+                return resolve(payload)
                 //resolve(userId)
             }
         })

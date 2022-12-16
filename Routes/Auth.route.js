@@ -84,12 +84,20 @@ router.post('/login', async(req,res,next)=>{
         const accessToken = await signAccessToken(data.recordset[0].Email)
         const refreshToken = await signRefreshToken(data.recordset[0].Email)
 
-        req.sessionStore.userid = data.recordset[0].Email
-        req.session.accessToken = accessToken
-        req.session.refreshToken = refreshToken
-        req.sessionStore.accessToken = accessToken
-        req.sessionStore.refreshToken = refreshToken
+        var userid = data.recordset[0].Email
+        // req.session.accessToken = accessToken
+        // req.session.refreshToken = refreshToken
+        // req.sessionStore.accessToken = accessToken
+        // req.sessionStore.refreshToken = refreshToken
+
+        
+        // res.setHeader('Set-Cookie',`authToken=${accessToken};Max-Age=3600;Path=/`)
+        // res.setHeader('Set-Cookie',`userEmail=${req.sessionStore.userid};Max-Age=3600;Path=/`)
+
+        res.setHeader('Set-Cookie',[`authToken=${accessToken};Max-Age=3600;Path=/`,`userEmail=${userid};Max-Age=3600;Path=/`])
+
         res.redirect('/home')
+        //res.render('index')
 
    } catch (error) {
     if(error.isJoi===true) {
@@ -107,13 +115,12 @@ router.post('/login', async(req,res,next)=>{
 
 router.get('/logout', async(req,res,next)=>{
     try {
-        console.log(req.sessionStore.accessToken)
-        const refreshToken = req.sessionStore.refreshToken
-        if(!refreshToken){
+        console.log(req.cookies)
+        var userId = req.cookies.userEmail
+        if(!userId){
             throw createError.BadRequest()
         }
 
-        const userId = await verifyRefreshToken(refreshToken)
         redisClient.del(userId+"RefreshToken",(err,val)=>{
             if(err){
                 console.log(err.message)
@@ -121,9 +128,6 @@ router.get('/logout', async(req,res,next)=>{
             }
 
             console.log('deleted-'+val)
-            // req.sessionStore.destroy(req.session.id)
-            // req.session.destroy()
-            //res.send('You have been logged out successfully...!!!')
         })
 
         redisClient.del(userId+"AccessToken",(err,val)=>{
@@ -135,9 +139,12 @@ router.get('/logout', async(req,res,next)=>{
             console.log('deleted-'+val)
             
         })
-
+            
             req.sessionStore.destroy(req.session.id)
             req.session.destroy()
+            
+            res.clearCookie('authToken')
+            res.clearCookie('userEmail')
             res.send('You have been logged out successfully...!!!')
         
     } catch (error) {

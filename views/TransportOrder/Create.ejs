@@ -65,9 +65,9 @@
                     <label for="ReceivedBy" class="col-form-label" style="width:130px;display:inline;margin-top:8px;">Received By</label>
                     <input type="text" class="form-control" id="ReceivedBy" style="width:200px;display:inline;margin-left:34px;margin-top:8px;" name="ReceivedBy" >
         
-                    <div style="display:inline;text-align:right;width:530px;position:absolute;margin-top:15px;" name="InvoiceGeneratedByDisplay"></div>
+                    <div style="display:inline;text-align:right;width:530px;position:absolute;margin-top:15px;" name="InvoiceGeneratedByDisplay" id="InvoiceGeneratedByDisplay"></div>
                     <input type="hidden" name="InvoiceGeneratedBy" value="" />
-                    <input type="hidden" name="InvoiceGeneratedByEmail" value='' />
+                    <input type="hidden" name="InvoiceGeneratedByEmail" id="InvoiceGeneratedByEmail" value='' />
                 </div>
                 <div class="row" style="margin-top:10px">
                     <button type="submit" class="btn btn-secondary" id="submit" style="width:872px;">Create</button>
@@ -75,4 +75,16 @@
             </form>
         </div>
     </body>
+
+    <script type="text/javascript">
+        document.cookie.split(';').forEach(function(item){
+            if(item.indexOf('userEmail')!=-1){
+                var loggedInUserID = item.split('=')[1];
+                $("#InvoiceGeneratedByDisplay").text(loggedInUserID.split('@')[0].toUpperCase().replace('.',' '))
+                $("#InvoiceGeneratedBy").val(loggedInUserID.split('@')[0].toUpperCase().replace('.',' '))
+                console.log(loggedInUserID)
+                $("#InvoiceGeneratedByEmail").val(loggedInUserID)
+            }
+        })
+    </script>
 </html>

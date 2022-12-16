@@ -8,10 +8,8 @@ const app = express();
 const session = require('express-session')
 var cookie = require('cookie');
 const AuthRoute = require('./Routes/Auth.route')
-const JWTHelper = require('./Helpers/jwt_helper')
-//const { signAccessToken, signRefreshToken } = require('./Helpers/jwt_helper')
-
-//var IsLoggedIn = false;
+const helper = require('./Helpers/Helper')
+const cookieParser = require('cookie-parser');
 
 //for logging
 const morgan = require('morgan');
@@ -26,19 +24,23 @@ app.listen('3001');
 app.use(session({
 
     // It holds the secret key for session
-    secret: '1',
+    secret: 'ThisIsSessionSecret',
     // Forces the session to be saved
     // back to the session store
-    resave: true,
+    resave: false,
+
+    cookie: { maxAge: 1000*60*60*24 },
 
     // Forces a session that is "uninitialized"
     // to be saved to the store
     saveUninitialized: true
 }));
 
-app.use(express.json());
-app.use(express.urlencoded());
-app.use(morgan('dev'));
+app.use(cookieParser())
+app.use(express.json())
+app.use(express.urlencoded())
+app.use(morgan('dev'))
+
 //app.use(express.static('public'));
 //app.use(express.static('JavaScriptSPA'));
 
@@ -50,108 +52,130 @@ app.get('/favicon.ico', (req,res,next)=>{
     res.send('')
 })
 
-app.get('*',async (req,res,next)=>{
-    console.log('Hitting Middleware ' + req.url)
+app.get('*', helper.AuthenticationCheck)
+app.post('*', helper.AuthenticationCheck)
+// app.get('*',async (req,res,next)=>{
+//     console.log(req.cookies.authToken)
+//     console.log('Hitting Middleware ' + req.url)
 
-    if(req.url === '/' || req.url.indexOf('login') != -1){
-        next()
-    }
-    else{
-        if(req.sessionStore.accessToken === undefined || req.sessionStore.accessToken === '' || req.sessionStore.accessToken === {}){
-            res.redirect('/')
-        }
-        else{
-            const accessToken = req.sessionStore.accessToken
-            const refreshToken = req.sessionStore.refreshToken
+//     if(req.url === '/' || req.url.indexOf('login') != -1){
+//         next()
+//     }
+//     else{
+//         if(req.cookies.authToken === undefined || req.cookies.authToken === '' || req.cookies.authToken === {}){
+//             res.redirect('/')
+//         }
+//         else{
+//             const accessToken = req.cookies.authToken
+//             const refreshToken = req.sessionStore.refreshToken
+//             const userId = req.cookies.userId
 
-            try {
-                await JWTHelper.verifyAccessToken(req,res,next).then((payload)=>{
-                    console.log(payload)
-                    if(payload.aud == req.sessionStore.userid){
-                        next()
-                    }
-                    else{
-                        console.log('prommise resolved but aud not matching')
-                    }
-                }).catch(async (err)=>{
-                    console.log(err)
+//             try {
+//                 await JWTHelper.verifyAccessToken(accessToken, userId).then((payload)=>{
+//                     console.log(payload)
+//                     if(payload.aud == userId){
+//                         next()
+//                     }
+//                     else{
+//                         console.log('prommise resolved but aud not matching')
+//                     }
+//                 }).catch(async (err)=>{
+//                     console.log(err)
 
-                    if (err.name === "TokenExpiredError") {
-                        console.log('Access token expired, checking refresh token')
+//                     if (err.name === "TokenExpiredError") {
+//                         console.log('Access token expired, checking refresh token')
 
-                        await JWTHelper.verifyRefreshToken(refreshToken).then(async (userId) =>{
-                            if(req.sessionStore.userid == userId){
-                                req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
-                                //req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
-                                next()
-                            }
-                        })
-                        .catch(async (err) => {
-                            console.log('error while verifying refresh token ' + err)
-                            res.redirect('/')
-                        })
+//                         await JWTHelper.verifyRefreshToken(refreshToken).then(async (userId) =>{
+//                             if(req.sessionStore.userid == userId){
+//                                 req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
+//                                 //req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
+//                                 res.setHeader('Set-Cookie',`authToken=${req.sessionStore.accessToken};Max-Age=3600;Path=/`)
+//                                 res.setHeader('Set-Cookie',`userId=${data.recordset[0].Email};Max-Age=3600;Path=/`)
 
-                        // req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
-                        // req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
+//                                 next()
+//                             }
+//                         })
+//                         .catch(async (err) => {
+//                             console.log('error while verifying refresh token ' + err)
+//                             res.redirect('/')
+//                         })
 
-                        // next()
-                    }
-                    else{
-                        res.redirect('login')
-                    }
-                })
-            } catch (error) {
+//                         // req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
+//                         // req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
+
+//                         // next()
+//                     }
+//                     else{
+//                         res.redirect('login')
+//                     }
+//                 })
+//             } catch (error) {
                 
-                    return next(createError.Unauthorized(err.message))
-            }
-        }
-    }
-})
+//                     return next(createError.Unauthorized(err.message))
+//             }
+//         }
+//     }
+// })
 
-app.post('*',async (req,res,next)=>{
-    console.log('Hitting Middleware ' + req.url)
+// app.post('*',async (req,res,next)=>{
+//     console.log(req.cookies.authToken)
+//     console.log('Hitting Middleware ' + req.url)
 
-    if(req.url === '/' || req.url.indexOf('login') != -1){
-        next()
-    }
-    else{
-        if(req.sessionStore.accessToken === undefined || req.sessionStore.accessToken === '' || req.sessionStore.accessToken === {}){
-            res.redirect('/')
-        }
-        else{
-            const accessToken = req.sessionStore.accessToken
-            const refreshToken = req.sessionStore.refreshToken
+//     if(req.url === '/' || req.url.indexOf('login') != -1){
+//         next()
+//     }
+//     else{
+//         if(req.cookies.authToken === undefined || req.cookies.authToken === '' || req.cookies.authToken === {}){
+//             res.redirect('/')
+//         }
+//         else{
+//             const accessToken = req.cookies.authToken
+//             const refreshToken = req.sessionStore.refreshToken
 
-            try {
-                await JWTHelper.verifyAccessToken(req,res,next).then((payload)=>{
-                    console.log(payload)
-                    if(payload.aud == req.sessionStore.userid){
-                        next()
-                    }
-                    else{
-                        console.log('prommise resolved but aud not matching')
-                    }
-                }).catch(async (err)=>{
-                    console.log(err)
+//             try {
+//                 await JWTHelper.verifyAccessToken(accessToken, req.sessionStore.userid).then((payload)=>{
+//                     console.log(payload)
+//                     if(payload.aud == req.sessionStore.userid){
+//                         next()
+//                     }
+//                     else{
+//                         console.log('prommise resolved but aud not matching')
+//                     }
+//                 }).catch(async (err)=>{
+//                     console.log(err)
 
-                    if (err.name === "TokenExpiredError") {
-                        console.log('TokenExpired Renewing')
-                        req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
-                        req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
+//                     if (err.name === "TokenExpiredError") {
+//                         console.log('Access token expired, checking refresh token')
 
-                        next()
-                    }
-                    else{
-                        res.redirect('login')
-                    }
-                })
-            } catch (error) {
+//                         await JWTHelper.verifyRefreshToken(refreshToken).then(async (userId) =>{
+//                             if(req.sessionStore.userid == userId){
+//                                 req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
+//                                 //req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
+//                                 res.setHeader('Set-Cookie',`authToken=${req.sessionStore.accessToken};Max-Age=3600;Path=/`)
+//                                 next()
+//                             }
+//                         })
+//                         .catch(async (err) => {
+//                             console.log('error while verifying refresh token ' + err)
+//                             res.redirect('/')
+//                         })
+
+//                         // req.sessionStore.accessToken = await JWTHelper.signAccessToken(req.sessionStore.userid)
+//                         // req.sessionStore.refreshToken = await JWTHelper.signRefreshToken(req.sessionStore.userid)
+
+//                         // next()
+//                     }
+//                     else{
+//                         res.redirect('login')
+//                     }
+//                 })
+//             } catch (error) {
                 
-                    return next(createError.Unauthorized(err.message))
-            }
-        }
-    }
-})
+//                     return next(createError.Unauthorized(err.message))
+//             }
+//         }
+//     }
+// })
 
 app.use('/auth', AuthRoute)
 
@@ -167,67 +191,12 @@ app.post('/login',(req,res,next)=>{
 
     console.log(req.body)
     res.render('login')
-
-
 });
-
-// app.get('*', (req, res, next) => {
-//     console.log('Middlewareee ' + req.session);
-//     console.log(req.session);
-//     console.log(req.url);
-
-//     // if (req.url.indexOf('login') != -1) {
-//     //     var loginqstr = req.url.split('?')[1];
-//     //     var login = loginqstr.split('=')[1];
-
-//     //     //if (login.indexOf('1')!=-1) {
-//     //         if (login==1) {
-//     //         console.log(req.session);
-//     //         //IsLoggedIn = true;
-//     //         req.session.name = "test";
-//     //         req.session.IsAuthenticated = true;
-//     //         console.log('authenticated');
-//     //     }
-//     // }
-//     if (req.session.IsAuthenticated == true) {
-//         console.log('user authenticated');
-//         next();
-//     } else {
-
-//         if (req.url.indexOf('login') != -1) {
-//             var loginqstr = req.url.split('?')[1];
-//             var login = loginqstr.split('=')[1];
-
-//             //if (login.indexOf('1')!=-1) {
-//                 if (login==1) {
-//                 console.log(req.session);
-//                 //IsLoggedIn = true;
-//                 req.session.name = "test";
-//                 req.session.IsAuthenticated = true;
-//                 console.log('authenticated');
-//                 next();
-//             }
-//         }
-
-//         console.log('Not Logged In, Redirecting to sign in page');
-//         req.session.IsAuthenticated = false;
-//         //res.redirect(__dirname+'/JavaScriptSPA/index');
-//         //res.sendFile(path.join(__dirname + '/JavaScriptSPA/index.html'));
-//         //res.redirect('/auth?login=1&redirectURL='+req.url);
-//         //res.redirect('/?login=1&redirectURL='+req.url);
-//         res.redirect('/');
-//     }
-// });
 
 app.get('/home', (req, res) => {
-    console.log('home comingg');
-    res.render('index');
+    console.log('home comingg')
+    res.render('index')
     //res.render('login');
-});
-
-app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.send('You have been logged out successfully..!!!');
 });
 
 app.get('/', (req, res) => {
@@ -302,20 +271,9 @@ app.get('/AdminTasks/Task/DeleteUser', adminTasks.DeleteUser);
 
 app.get('/AdminTaskController/DeleteUser', adminTasks.DeleteUser);
 
-// app.post('/TransportOrder/Create',(req,res)=>{
-//     console.log(req.body);
-//     //const formData = JSON.parse(req.body);
-//     //console.log("formData"+formData);
-//     let to = new TransportOrder();
-//     to.Create(req.body);
-
-//     res.redirect('/');
-// });
-
 app.use(async(req,res,next)=>{
     console.log('redirectinggg '+ req.url)
     res.redirect('/')
-    //next(createError.NotFound('This route does not exists'))
 })
 
 app.use((err,req,res,next)=>{
